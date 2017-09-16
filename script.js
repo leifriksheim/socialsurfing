@@ -66,7 +66,6 @@ var app = new Vue({
 
           if(key != vm.userKey) {
             vm.connection = this.peer.connect(key);
-            vm.connectedToUser = true;
 
             vm.connection.on('open', function(){
               document.addEventListener("mousemove", function (e) {
