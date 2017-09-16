@@ -14,16 +14,22 @@ var app = new Vue({
   el: '#app',
   mounted() {
     var vm = this;
+    var database = window.database;
+
+    vm.userKey = database.ref('users').push('').key;
+    vm.createUser();
+
+    // Get all the userID of all other people on the page
+    database.ref('users').on('value', function(snapshot) {
+      vm.otherUsers = snapshot.val();
+    });
+
+    // Remove the user before a user is closing the page
     window.addEventListener("beforeunload", function (event) {
       event.preventDefault();
       window.database.ref('users/' + vm.userKey).remove();
       return 'Logget ut';
     });
-    vm.userKey = window.database.ref('users').push('').key;
-    window.database.ref('users').on('value', function(snapshot) {
-      vm.otherUsers = snapshot.val();
-    });
-    vm.createUser();
   },
   data: {
     peer: null,
@@ -32,9 +38,26 @@ var app = new Vue({
     otherUsers: [],
     mousePositions: {},
   },
+  methods: {
+    createUser() {
+      var vm = this;
+
+      vm.peer = new Peer(vm.userKey, {key: 'emk6lwq175xhto6r'});
+
+      // Start sending mousepointer data
+      vm.peer.on('connection', function(conn) {
+        conn.on('data', function(data){
+          var userID = data.userID;
+          vm.$set(vm.mousePositions, userID, data);
+          console.log(vm.mousePositions);
+        });
+      });
+    },
+  },
   watch: {
     otherUsers(users) {
       var vm = this;
+      
       for (var key in users) {
         if (users.hasOwnProperty(key)) {
 
@@ -58,36 +81,4 @@ var app = new Vue({
       };
     },
   },
-  methods: {
-    createUser() {
-      var vm = this;
-
-      this.peer = new Peer(this.userKey, {key: 'emk6lwq175xhto6r'});
-
-      this.peer.on('connection', function(conn) {
-        conn.on('data', function(data){
-          var userID = data.userID;
-          vm.$set(vm.mousePositions, userID, data);
-          console.log(vm.mousePositions);
-        });
-      });
-
-    },
-    connectToUser() {
-      var vm = this;
-      var otherUsers = this.otherUsers;
-
-      for (var key in otherUsers) {
-        if (otherUsers.hasOwnProperty(key)) {
-          console.log(key + " -> " + p[key]);
-        }
-      }
-    },
-  },
-  computed: {
-    newMousePositions() {
-      console.log('rendering', this.mousePositions);
-      return this.mousePositions;
-    }
-  }
 });
