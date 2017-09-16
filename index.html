@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <script src="https://unpkg.com/vue"></script>
+    <script src="http://cdn.peerjs.com/0.3/peer.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.3.1/firebase.js"></script>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div id="app">
+
+      <div class="container">
+
+        <div class="content">
+
+          <div if="mousePositions">
+            <img
+              v-for="mousePosition in mousePositions"
+              class="mousepointer"
+              height="20"
+              src="https://cdn4.iconfinder.com/data/icons/social-messaging-productivity-5/128/mouse-pointer-128.png"
+              :style="`left: ${mousePosition.x}px; top: ${mousePosition.y}px;`"
+            >
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
