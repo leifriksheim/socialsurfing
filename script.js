@@ -12,25 +12,6 @@ var database = firebase.database();
 
 var app = new Vue({
   el: '#app',
-  mounted() {
-    var vm = this;
-    var database = window.database;
-
-    vm.userKey = database.ref('users').push('').key;
-    vm.createUser();
-
-    // Get all the userID of all other people on the page
-    database.ref('users').on('value', function(snapshot) {
-      vm.otherUsers = snapshot.val();
-    });
-
-    // Remove the user before a user is closing the page
-    window.addEventListener("beforeunload", function (event) {
-      event.preventDefault();
-      window.database.ref('users/' + vm.userKey).remove();
-      return 'Logget ut';
-    });
-  },
   data: {
     peer: null,
     connection: null,
@@ -38,18 +19,38 @@ var app = new Vue({
     otherUsers: [],
     mousePositions: {},
   },
+  mounted() {
+    var vm = this;
+    var database = window.database;
+
+    // Create new user in firebase and set as userKey
+    vm.userKey = database.ref('users').push('').key;
+    vm.createPeer();
+
+    // Get all the userIDs of all other people on the page
+    database.ref('users').on('value', function(snapshot) {
+      vm.otherUsers = snapshot.val();
+    });
+
+    // Remove the userID in firebase before a user is closing the page
+    window.addEventListener("beforeunload", function (event) {
+      event.preventDefault();
+      window.database.ref('users/' + vm.userKey).remove();
+      return 'Logget ut';
+    });
+  },
   methods: {
-    createUser() {
+    createPeer() {
       var vm = this;
 
       vm.peer = new Peer(vm.userKey, {key: 'emk6lwq175xhto6r'});
 
-      // Start sending mousepointer data
+      // Start listening for mousepointer data
       vm.peer.on('connection', function(conn) {
         conn.on('data', function(data){
           var userID = data.userID;
+          // Vue stuff to make sure a new object property is still reactive
           vm.$set(vm.mousePositions, userID, data);
-          console.log(vm.mousePositions);
         });
       });
     },
@@ -57,7 +58,9 @@ var app = new Vue({
   watch: {
     otherUsers(users) {
       var vm = this;
-      
+
+      // Loop trough other users and make a connection to each of them.
+      // This needs work to connect to several, somethings not working right
       for (var key in users) {
         if (users.hasOwnProperty(key)) {
 
