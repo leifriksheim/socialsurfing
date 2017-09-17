@@ -1,6 +1,6 @@
 # Socialsurfing - A WebRTC experiment
 
-[Try the demo](https://mousepointer.surge.sh)
+[Try the demo](http://mousepointer.surge.sh)
 
 ### What is this?
 
