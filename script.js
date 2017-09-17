@@ -24,7 +24,6 @@ var app = new Vue({
     var vm = this;
 
     vm.createPeer();
-    vm.connectToUsers();
 
     // Get all the userIDs of all other people on the page
     vm.database.ref('users').on('value', function(snapshot) {
@@ -54,16 +53,16 @@ var app = new Vue({
 
         conn.on('data', function(data){
           var userID = conn.peer;
-          // Vue stuff to make sure a new object property is still reactive
+          // Vue stuff to make sure the object property is still reactive
           vm.$set(vm.mousePositions, userID, data);
         });
 
         conn.on('close', function(data){
           var userID = conn.peer;
-          // Vue stuff to make sure a new object property is still reactive
+          // Vue stuff to make sure the object property is still reactive
           vm.$delete(vm.mousePositions, userID);
         });
-        
+
       });
     },
     connectToUsers(users) {
@@ -72,7 +71,6 @@ var app = new Vue({
       // Loop trough other users and make a connection to each of them.
       for (var key in users) {
         if (users.hasOwnProperty(key)) {
-          console.log('connecting to user');
           vm.connectToUser(key);
         }
       };
