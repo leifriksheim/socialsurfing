@@ -14,22 +14,22 @@ var app = new Vue({
   el: '#app',
   data: {
     peer: null,
-    connection: null,
+    database: window.database,
+    remotePeers: [],
+    connections: [],
     userKey: '',
-    otherUsers: [],
     mousePositions: {},
   },
   mounted() {
     var vm = this;
-    var database = window.database;
 
-    // Create new user in firebase and set as userKey
-    vm.userKey = database.ref('users').push('').key;
     vm.createPeer();
+    vm.connectToUsers();
 
     // Get all the userIDs of all other people on the page
-    database.ref('users').on('value', function(snapshot) {
-      vm.otherUsers = snapshot.val();
+    vm.database.ref('users').on('value', function(snapshot) {
+      var users = snapshot.val();
+      vm.connectToUsers(users);
     });
 
     // Remove the userID in firebase before a user is closing the page
@@ -43,43 +43,57 @@ var app = new Vue({
     createPeer() {
       var vm = this;
 
+      // Create new user in firebase and set as userKey
+      vm.userKey = vm.database.ref('users').push('').key;
+
       vm.peer = new Peer(vm.userKey, {key: 'emk6lwq175xhto6r'});
+
 
       // Start listening for mousepointer data
       vm.peer.on('connection', function(conn) {
+
         conn.on('data', function(data){
-          var userID = data.userID;
+          var userID = conn.peer;
           // Vue stuff to make sure a new object property is still reactive
           vm.$set(vm.mousePositions, userID, data);
         });
+
+        conn.on('close', function(data){
+          var userID = conn.peer;
+          // Vue stuff to make sure a new object property is still reactive
+          vm.$delete(vm.mousePositions, userID);
+        });
+        
       });
     },
-  },
-  watch: {
-    otherUsers(users) {
+    connectToUsers(users) {
       var vm = this;
 
       // Loop trough other users and make a connection to each of them.
-      // This needs work to connect to several, somethings not working right
       for (var key in users) {
         if (users.hasOwnProperty(key)) {
-
-          if(key != vm.userKey) {
-            vm.connection = this.peer.connect(key);
-
-            vm.connection.on('open', function(){
-              document.addEventListener("mousemove", function (e) {
-                setTimeout(function () {
-                  var userID = vm.userKey;
-                  var X = e.clientX;
-                  var Y = e.clientY;
-                  vm.connection.send({x: X, y: Y, userID: userID});
-                }, 50);
-              });
-            });
-          }
-
+          console.log('connecting to user');
+          vm.connectToUser(key);
         }
+      };
+    },
+    connectToUser(userID) {
+      var vm = this;
+      if(userID != vm.userKey) {
+        var connection = vm.peer.connect(userID);
+        vm.remotePeers.push(connection.peer);
+        vm.connections.push(connection);
+
+        connection.on('open', function(){
+          document.addEventListener("mousemove", function (e) {
+            setTimeout(function () {
+              var userID = vm.userKey;
+              var X = e.clientX;
+              var Y = e.clientY;
+              connection.send({x: X, y: Y, userID: userID});
+            }, 50);
+          });
+        });
       };
     },
   },
